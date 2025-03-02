@@ -1,11 +1,12 @@
 <?php
 session_start();
 
-include "../Database/db_connection.php";
-include "User.php";
+require_once '../../../config/database.php';
+
+use App\Models\User;
 
 // Ellenőrizzük, hogy létezik-e az adatbázis-kapcsolatot inicializáló fájl
-if (!file_exists('../Database/db_connection.php')) {
+if (!file_exists('../../../config/database.php')) {
     die("Hiányzik az adatbázis-kapcsolat inicializáló fájl!"); // Ha hiányzik a fájl, álljon le a futás
 }
 
