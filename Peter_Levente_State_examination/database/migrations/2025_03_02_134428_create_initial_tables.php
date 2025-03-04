@@ -77,6 +77,18 @@ return new class extends Migration
         ("Nike Liverpool FC 23/24 Home Vapor Match Jersey", 694.08, "Jerseys", "", "https://gfx.r-gol.com/media/res/products/340/162340/465x605/dx2618-688_1.jpg"),
         ("Adidas FC Bayern 23/24 Home Authentic Jersey", 552.66, "Jerseys", "", "https://gfx.r-gol.com/media/res/products/321/159321/465x605/hr3729_1.jpg"),
         ("Ferencváros Nike Men\'s Home Jersey", 321.26, "Jerseys", "", "https://shop.fradi.hu/api/uploads/0300/0280/0280/0380/0380/0648/c66c/c666/8fb6/cec6/cec4/3ec0/1ee0/1e60/1f30/1e30/250x.jpg");
+        ( "Sepsi OSK Unisex Game Jersey", 195.00, "Jerseys", "", "https://fanshop.sepsiosk.ro/cdn/shop/files/IMG-5727.jpg?v=1711289608&width=493"),
+        ( "FK Csíkszereda Home Jersey", 93.00, "Jerseys", "", "https://soldigo.azureedge.net/images/15861/zaxa2brkvx.png"),
+        ( "Nike Tottenham Hotspur 23/24 Home Vapor Match Jersey", 694.08, "Jerseys", "", "https://gfx.r-gol.com/media/res/products/680/162680/465x605/dx2625-101_1.jpg"),
+        ( "Nike FC Barcelona 23/24 Home Stadium Jersey", 597.66, "Jerseys", "", "https://gfx.r-gol.com/media/res/products/811/179811/465x605/dx2687-456_6.jpg"),
+        ( "Nike Phantom Luna II Elite AG-PRO", 1554.79, "Shoes", "", "https://gfx.r-gol.com/media/res/products/563/184563/465x605/fj2579-001_6.webp"),
+        ( "Adidas X Crazyfast+ FG", 1349.08, "Shoes", "", "https://gfx.r-gol.com/media/res/products/759/185759/465x605/ie2416_1.webp"),
+        ( "Puma Future 7 Ultimate Rush FG/AG", 1086.95, "Shoes", "", "https://gfx.r-gol.com/media/res/products/979/187979/465x605/107828-01_1.webp"),
+        ( "Nike Zoom Mercurial Superfly 9 Elite SG-PRO Player Edition", 1413.33, "Shoes", "", "https://gfx.r-gol.com/media/res/products/513/187513/465x605/fd0250-700_1.webp"),
+        ( "Adidas Fussballliebe EURO 2024 Pro Ball (Size 5)", 501.01, "Balls", "", "https://gfx.r-gol.com/media/res/products/924/182924/465x605/iq3682-5_1.webp"),
+        ( "Adidas UCL Pro 23/24 Ball (Size 5)", 558.83, "Balls", "", "https://gfx.r-gol.com/media/res/products/969/186969/465x605/in9340-5_1.webp"),
+        ( "Nike Premier League Flight Ball (Size 5)", 610.23, "Balls", "", "https://gfx.r-gol.com/media/res/products/347/184347/465x605/fb2979-101-5_1.webp"),
+        ( "Puma Orbita 1 La Liga Ball (Size 5)", 411.06, "Balls", "", "https://gfx.r-gol.com/media/res/products/901/181901/465x605/084106-01-5_1.webp");
     ');
     }
 

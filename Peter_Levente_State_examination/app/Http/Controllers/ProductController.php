@@ -3,30 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     // Minden termék lekérdezése
     public function index()
     {
-        $products = Product::all();  // Eloquent segítségével lekérjük az összes terméket
-        return view('products.index', compact('products'));  // Visszaadjuk a termékeket egy view-nak
+        $products = Product::all();  // Lekérjük az összes terméket
+        return view('index', compact('products'));  // View-hoz továbbítjuk
     }
 
     // Egyetlen termék lekérdezése ID alapján
     public function show($id)
     {
-        $product = Product::find($id);  // Az Eloquent 'find' metódusa lekéri a terméket ID alapján
-        if (!$product) {
-            return redirect()->route('products.index')->with('error', 'Product not found');
-        }
-        return view('products.show', compact('product'));  // Visszaadjuk a terméket egy részletes oldalon
+        $product = Product::findOrFail($id);  // Automatikusan 404-et dob, ha nincs találat
+        return view('products.show', compact('product'));
     }
 
     // Kategória alapján termékek lekérdezése
-    public function category($category)
+    public function showcategory($category)
     {
-        $products = Product::getProductsByCategory($category);  // Kategória alapú lekérdezés
-        return view('products.category', compact('products'));  // Visszaadjuk a kategória szerint szűrt termékeket
+        $products = Product::where('category', $category)->get(); // Lekérjük a kategória szerinti termékeket
+
+        if ($products->isEmpty()) {
+            return redirect()->route('products.index')->with('error', 'No products found in this category.');
+        }
+
+        return view('products.category', compact('products', 'category'));
     }
 }
