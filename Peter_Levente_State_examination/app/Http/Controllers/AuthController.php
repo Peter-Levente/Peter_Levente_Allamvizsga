@@ -1,65 +1,80 @@
 <?php
+    namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
+    use Illuminate\Http\Request;
+    use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Facades\Hash;
+    use App\Models\User;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-
-class AuthController extends Controller
-{
-    // Regisztrációs metódus
-    public function register(Request $request)
+    class AuthController extends Controller
     {
-        $request->validate([
-            'email' => 'required|email|unique:users',
-            'username' => 'required|string|max:255',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
+        // Regisztrációs metódus
+        public function register(Request $request)
+        {
+            $request->validate([
+                'email' => 'required|email|unique:users',
+                'name' => 'required|string|max:255',
+                'password' => 'required|string|min:6|confirmed',
+            ]);
 
-        $user = User::create([
-            'email' => $request->email,
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-        ]);
+            User::create([
+                'email' => $request->email,
+                'name' => $request->name,
+                'password' => Hash::make($request->password),
+            ]);
 
-        Auth::login($user);
-        return redirect('/dashboard');
-    }
-
-    // Bejelentkezés
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        if (Auth::attempt($credentials, $request->remember)) {
-            $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+            return redirect('/login')->with('success', 'Sikeres regisztráció! Most jelentkezz be.');
         }
 
-        return back()->withErrors(['email' => 'Hibás email vagy jelszó']);
-    }
 
-    // Automatikus bejelentkezés (Remember Me)
-    public function autoLogin()
-    {
-        if (Auth::check()) {
-            return redirect('/dashboard');
+        // Bejelentkezés
+        use Illuminate\Http\Request;
+        use Illuminate\Support\Facades\Auth;
+        use Illuminate\Support\Facades\Hash;
+        use App\Models\User;
+
+        public function login(Request $request)
+        {
+            // Ellenőrizd, hogy milyen adatok érkeznek be
+            dd($request->all());
+
+            // Validáció
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+            // Keresd meg az email cím alapján a felhasználót
+            $user = User::where('email', $request->email)->first();
+
+            // Ellenőrizd, hogy létezik-e a felhasználó és helyes-e a jelszó
+            if ($user && Hash::check($request->password, $user->password)) {
+                Auth::login($user);
+                return redirect()->intended('/dashboard');
+            } else {
+                return back()->withErrors([
+                    'email' => 'A megadott email-cím és jelszó nem egyeznek.',
+                ])->withInput();
+            }
         }
 
-        return redirect('/login');
-    }
 
-    // Kijelentkezés
-    public function logout(Request $request)
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/login');
+        // Automatikus bejelentkezés (Remember Me)
+        public function autoLogin()
+        {
+            if (Auth::check()) {
+                return redirect('/dashboard');
+            }
+
+            return redirect('/login');
+        }
+
+        // Kijelentkezés
+        public function logout(Request $request)
+        {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect('/login');
+        }
     }
-}

@@ -27,9 +27,5 @@ class User extends Authenticatable
         'created_at' => 'datetime',
     ];
 
-    // Automatikus jelszó titkosítás beállítása
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = Hash::make($value);
-    }
+
 }

@@ -22,12 +22,21 @@
                     <a href="{{ route('register') }}"><i class="fa-solid fa-user-plus"></i> Registration</a>
                     @endif
                 </div>
+
                 <div class="auth-buttons">
                     @if (auth()->check()) <!-- Ha be van jelentkezve -->
-                    <a href="{{ route('logout') }}" class="auth-right"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-                    <span class="welcome-message">Welcome, {{ auth()->user()->username }}!</span>
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+
+                    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+                        @csrf
+                    </form>
+
+                    <span class="welcome-message">Welcome, {{ auth()->user()->name }}!</span>
                     @endif
                 </div>
+
                 <div class="header-actions">
                     <!-- Home gomb csak akkor jelenik meg, ha NEM az index oldalon vagyunk -->
                     @if (!Request::is('/'))
@@ -40,7 +49,7 @@
                     <a id="cart-icon" href="{{ route('cart.index') }}" class="header-link">
                         <i class="fa-solid fa-basket-shopping"></i> My Cart
                     </a>
-                    <a id="orders-icon" href="{{ route('orders.index') }}" class="header-link">
+                    <a id="orders-icon" href="{{ route('orders.myorders') }}" class="header-link">
                         <i class="fa-solid fa-box"></i> My Orders
                     </a>
                     @endif
