@@ -12,7 +12,7 @@ Route::get('/', [ProductController::class, 'index'])->name('home');
 
 // Termékek
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/product/{id}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/product/{id}', [ProductController::class, 'show'])->name('products.details');
 Route::get('/category/{category}', [ProductController::class, 'showcategory'])->name('products.category');
 
 // Regisztráció és bejelentkezés
@@ -33,13 +33,19 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Kosár
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.mycart');
     Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add');
-    Route::post('/cart/update/{cart}', [CartController::class, 'updateCart'])->name('cart.update');
-    Route::delete('/cart/remove/{cart}', [CartController::class, 'removeFromCart'])->name('cart.remove');
+    Route::put('/cart/{cart}', [CartController::class, 'updateCart'])->name('cart.update');
+    Route::delete('/cart/{cart}', [CartController::class, 'removeFromCart'])->name('cart.remove');
+    Route::get('/cart/clear-expired', [CartController::class, 'clearExpiredCarts']);
 
-    // Rendelések
+    // Rendelés véglegesítés
+    Route::get('/checkout', [OrderController::class, 'checkout'])->name('cart.checkout');
+    Route::post('/order/store', [OrderController::class, 'store'])->name('order.place');
+    Route::get('/thank-you/{order}', [OrderController::class, 'thankYou'])->name('orders.thank_you');
     Route::get('/myOrders', [OrderController::class, 'myOrders'])->name('orders.myorders');
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+
 });
 
 

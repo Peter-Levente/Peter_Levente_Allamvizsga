@@ -18,7 +18,7 @@ class ProductController extends Controller
     public function show($id)
     {
         $product = Product::findOrFail($id);  // Automatikusan 404-et dob, ha nincs találat
-        return view('products.show', compact('product'));
+        return view('products.details', compact('product'));
     }
 
     // Kategória alapján termékek lekérdezése

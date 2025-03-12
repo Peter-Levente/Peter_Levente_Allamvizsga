@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
@@ -12,39 +13,62 @@ class CartController extends Controller
     // Kosár megtekintése
     public function index()
     {
+        $this->cleanupOldCarts(); // Régi kosártételek törlése
+
         $user = Auth::user();
         $cartItems = Cart::where('user_id', $user->id)->with('product')->get();
 
         $totalPrice = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
 
-        return view('cart.index', compact('cartItems', 'totalPrice'));
+        return view('cart.mycart', compact('cartItems', 'totalPrice'));
     }
 
     // Termék hozzáadása a kosárhoz
     public function addToCart(Request $request)
     {
+        $userId = auth()->id();
+        if (!$userId) {
+            return redirect()->route('login')->with('error', 'Be kell jelentkezned a vásárláshoz!');
+        }
+
+        // Validáció
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1|max:50',
+            'size' => 'required|string',
         ]);
 
-        $user = Auth::user();
-        $cartItem = Cart::where('user_id', $user->id)
+        $product = Product::find($request->product_id);
+
+        // Ha valamiért még mindig nem létezne a termék (bár az exists miatt ez ritka)
+        if (!$product) {
+            return redirect()->route('cart.mycart')->with('error', 'A termék nem található!');
+        }
+
+        // Kosár adatainak ellenőrzése az adatbázisban
+        $cartItem = Cart::where('user_id', $userId)
             ->where('product_id', $request->product_id)
             ->first();
 
         if ($cartItem) {
-            $cartItem->increment('quantity', $request->quantity);
+            // Ha már létezik a termék a kosárban, akkor frissítjük a mennyiséget
+            $cartItem->quantity += $request->quantity;
+            $cartItem->save();
         } else {
+            // Ha még nem létezik a termék a kosárban, hozzáadjuk
             Cart::create([
-                'user_id' => $user->id,
+                'user_id' => $userId,
                 'product_id' => $request->product_id,
                 'quantity' => $request->quantity,
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Item added to cart!');
+        // A méretet csak a session-ben tároljuk
+        session(['size_' . $request->product_id => $request->size]);
+
+        return redirect()->route('cart.mycart')->with('success', 'A termék sikeresen hozzáadva a kosárhoz!');
     }
+
 
     // Mennyiség frissítése
     public function updateCart(Request $request, Cart $cart)
@@ -59,8 +83,9 @@ class CartController extends Controller
 
         $cart->update(['quantity' => $request->quantity]);
 
-        return redirect()->route('cart.index')->with('success', 'Cart updated!');
+        return redirect()->route('cart.mycart')->with('success', 'Cart updated!');
     }
+
 
     // Termék eltávolítása
     public function removeFromCart(Cart $cart)
@@ -71,6 +96,15 @@ class CartController extends Controller
 
         $cart->delete();
 
-        return redirect()->route('cart.index')->with('success', 'Item removed from cart!');
+        return redirect()->route('cart.mycart')->with('success', 'Item removed from cart!');
     }
+
+
+    public function cleanupOldCarts()
+    {
+        // Törli azokat a kosártételeket, amelyek 1 napnál régebbiek
+        $deletedRows = Cart::where('created_at', '<', Carbon::now()->subDay())->delete();
+        return $deletedRows;
+    }
+
 }

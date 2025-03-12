@@ -40,14 +40,23 @@ header {
     align-items: center;
 }
 
+
+
+
+
 .auth-buttons {
-    position: fixed;
-    top: 20px; /* Az oldal tetejétől mért távolság */
-    left: 20px; /* Az oldal bal szélétől mért távolság */
     display: flex;
-    flex-direction: row; /* Gombok egymás mellett */
+    flex-direction: row; /* Egy sorban tartja az elemeket */
     gap: 10px; /* Gombok közötti távolság */
+    position: fixed;
+    top: 20px;
+    left: 20px;
 }
+
+.auth-buttons a:first-child {
+    order: -1; /* A Home gombot előre hozza */
+}
+
 
 .auth-buttons a {
     text-decoration: none;
@@ -70,6 +79,7 @@ header {
 .auth-buttons a i {
     font-size: 18px; /* Ikon mérete */
 }
+
 
 .welcome-message {
     font-weight: bold; /* Vastagabb betű */

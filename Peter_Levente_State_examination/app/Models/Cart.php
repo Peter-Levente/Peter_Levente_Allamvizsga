@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,18 +8,17 @@ class Cart extends Model
 {
     use HasFactory;
 
-    protected $table = 'cart'; // Tábla neve
-    protected $fillable = ['user_id', 'product_id', 'quantity']; // Engedélyezett mezők tömbje
+    protected $table = 'cart'; // Ha az adatbázisban tényleg "cart" a neve
+    protected $primaryKey = 'id'; // Az elsődleges kulcs
+    protected $fillable = ['user_id', 'product_id', 'quantity']; // Engedélyezett mezők
 
-    // Kapcsolat a User modellel
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    // Kapcsolat a Product modellel
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id', 'id');
     }
 }

@@ -46,7 +46,7 @@
                     @endif
 
                     @if (auth()->check()) <!-- Ha be van jelentkezve -->
-                    <a id="cart-icon" href="{{ route('cart.index') }}" class="header-link">
+                    <a id="cart-icon" href="{{ route('cart.mycart') }}" class="header-link">
                         <i class="fa-solid fa-basket-shopping"></i> My Cart
                     </a>
                     <a id="orders-icon" href="{{ route('orders.myorders') }}" class="header-link">
@@ -66,7 +66,7 @@
 
     <main>
         @forelse ($products as $product)
-            <a href="{{ route('products.show', $product->id) }}" class="product">
+            <a href="{{ route('products.details', $product->id) }}" class="product">
                 <div>
                     <img src="{{ $product->image }}" alt="{{ $product->name }}">
                     <p>{{ $product->name }}</p>
