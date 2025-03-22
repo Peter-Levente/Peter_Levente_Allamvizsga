@@ -67,55 +67,63 @@
     <main>
         @if (isset($product))
             <div class="product-details">
-                <img src="{{ asset($product->image) }}" alt="{{ $product->name }}">
-                <h2>{{ $product->name }}</h2>
-                <p class="price">{{ number_format($product->price, 2) }} lei</p>
+                <div class="product-image">
+                    <img src="{{ asset($product->image) }}" alt="{{ $product->name }}">
+                </div>
+                <div class="product-info">
+                    <h2>{{ $product->name }}</h2>
+                    <p class="price">{{ number_format($product->price, 2) }} lei</p>
+                    <p class="description">{{ $product->description }}TERMEK_LEIRAS</p> <!-- Leírás hozzáadása -->
 
-                <form action="{{ route('cart.add', ['product' => $product->id]) }}" method="post">
-                    @csrf
+                    <form action="{{ route('cart.add', ['product' => $product->id]) }}" method="post">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-
-                    <label for="size">Size:</label>
-                    <select name="size" id="size" required>
-                        <option value="" selected disabled>Select size</option> <!-- Alapértelmezett üres opció -->
-                        @if ($product->category == 'Shoes')
-                            <option value="38">38</option>
-                            <option value="38.5">38.5</option>
-                            <option value="39">39</option>
-                            <option value="40">40</option>
-                            <option value="40.5">40.5</option>
-                            <option value="41">41</option>
-                            <option value="42">42</option>
-                            <option value="42.5">42.5</option>
-                            <option value="43">43</option>
-                            <option value="44">44</option>
-                            <option value="44.5">44.5</option>
-                            <option value="45">45</option>
-                            <option value="45.5">45.5</option>
-                            <option value="46">46</option>
-                            <option value="47">47</option>
-                            <option value="47.5">47.5</option>
-                        @elseif ($product->category == 'Balls')
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        @else
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="XXL">XXL</option>
+                        @if ($product->category != 'Equipment')
+                            <label for="size">Size:</label>
+                            <select name="size" id="size" required>
+                                <option value="" selected disabled>Select size</option> <!-- Alapértelmezett üres opció -->
+                                @if ($product->category == 'Shoes')
+                                    <option value="38">38</option>
+                                    <option value="38.5">38.5</option>
+                                    <option value="39">39</option>
+                                    <option value="40">40</option>
+                                    <option value="40.5">40.5</option>
+                                    <option value="41">41</option>
+                                    <option value="42">42</option>
+                                    <option value="42.5">42.5</option>
+                                    <option value="43">43</option>
+                                    <option value="44">44</option>
+                                    <option value="44.5">44.5</option>
+                                    <option value="45">45</option>
+                                    <option value="45.5">45.5</option>
+                                    <option value="46">46</option>
+                                    <option value="47">47</option>
+                                    <option value="47.5">47.5</option>
+                                @elseif ($product->category == 'Balls')
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                @else
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                    <option value="XXL">XXL</option>
+                                @endif
+                            </select>
                         @endif
-                    </select>
-                    <label for="quantity">Quantity:</label>
-                    <input type="number" name="quantity" id="quantity" min="1" max="50" value="1" required>
-                    <button type="submit">Add to Cart</button>
-                </form>
+
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" name="quantity" id="quantity" min="1" max="50" value="1" required>
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                </div>
             </div>
         @else
             <p>Product not found.</p>
         @endif
     </main>
+
 
     <footer>
         <div class="footer">

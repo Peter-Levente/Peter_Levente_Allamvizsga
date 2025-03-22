@@ -62,6 +62,7 @@
                     <a href="{{ route('products.category', ['category' => 'Jerseys']) }}">Club Jerseys</a>
                     <a href="{{ route('products.category', ['category' => 'Shoes']) }}">Football Shoes</a>
                     <a href="{{ route('products.category', ['category' => 'Balls']) }}">Football Balls</a>
+                    <a href="{{ route('products.category', ['category' => 'Equipment']) }}">Football Equipment</a>
                 </div>
             </nav>
         </header>
