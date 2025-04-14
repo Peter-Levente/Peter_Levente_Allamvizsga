@@ -5,7 +5,11 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CartController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EmbeddingController;
+
+
 
 // Kezdőlap
 Route::get('/', [ProductController::class, 'index'])->name('home');
@@ -45,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/thank-you/{order}', [OrderController::class, 'thankYou'])->name('orders.thank_you');
     Route::get('/myOrders', [OrderController::class, 'myOrders'])->name('orders.myorders');
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+
 
 });
 
