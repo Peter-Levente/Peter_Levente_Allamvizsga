@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -7,19 +6,16 @@ use App\Services\QuestionAnsweringService;
 
 class QuestionAnswerController extends Controller
 {
-    /**
-     * Ez a metódus egy kérdést fogad POST kérésben,
-     * majd visszaadja a választ, amit a QuestionAnsweringService generál.
-     */
+    // A felhasználó által feltett kérdés feldolgozása
     public function ask(Request $request, QuestionAnsweringService $qa)
     {
-        // 1. Kivesszük a kérdést a kérésből
+        // Kivesszük a kérdést a HTTP kérésből (pl. POST űrlapból vagy JSON-ből)
         $question = $request->input('question');
 
-        // 2. Meghívjuk a szolgáltatást, hogy megválaszolja a kérdést
+        // Meghívjuk a szolgáltatást, amely válaszol a kérdésre
         $answer = $qa->answer($question);
 
-        // 3. JSON válaszként visszaküldjük az eredményt
+        // Visszaküldjük a választ JSON formátumban a kliensnek
         return response()->json(['answer' => $answer]);
     }
 }

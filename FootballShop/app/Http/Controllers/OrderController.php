@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderPlaced;
 use App\Models\Cart;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\UserInterestProfileUpdater;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +36,7 @@ class OrderController extends Controller
     {
         $user = Auth::user();
         $orders = Order::where('user_id', $user->id)
-            ->with('items.product') // Betöltjük az items kapcsolatot és a termékeket is
+            ->with('orderItems.product') // Betöltjük az items kapcsolatot és a termékeket is
             ->get();
 
 
@@ -72,7 +74,7 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'quantity' => $item->quantity,
-                    'price' => $item->product->price, // Feltételezve, hogy a terméknek van ára
+                    'price' => $item->product->price,
                 ]);
             }
 
@@ -81,6 +83,10 @@ class OrderController extends Controller
 
             return $order;
         });
+
+        // A rendelés leadása után eseményt indítunk, amely jelezheti a rendszer más részeinek,
+        // hogy új rendelés történt. Például: ajánlói profil frissítése.
+        OrderPlaced::dispatch(auth()->id());
 
         return redirect()->route('orders.thank_you', ['order' => $order->id])
             ->with('success', 'A termék sikeresen le lett adva!');
@@ -92,13 +98,61 @@ class OrderController extends Controller
         $order = Order::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         $order->delete();
 
+        // 👉 Itt is érdemes lehet újraszámolni a felhasználói érdeklődési profilt,
+        // mert a rendelés megszűnik, így ne legyen hatással a további ajánlásokra
         // Visszairányítás a rendeléseket tartalmazó oldalra
+        app(UserInterestProfileUpdater::class)->update(Auth::id());
+
+
         return redirect()->route('orders.myorders')->with('success', 'A rendelés sikeresen törölve lett.');
     }
 
-
-    public function thankYou(Order $order)
+    public function thankYou($orderId)
     {
-        return view('orders.thank_you', compact('order'));
+        $order = Order::with('orderItems.product')->findOrFail($orderId);
+
+        $purchasedProductIds = $order->orderItems->pluck('product.id')->toArray();
+        $purchasedCategories = $order->orderItems->pluck('product.category')->unique()->toArray();
+
+        $recommendedProducts = collect();
+
+        if (!empty($purchasedProductIds)) {
+            // Random termékek lekérése, kizárva a megvett kategóriákat és termékeket
+            $candidates = Product::whereNotIn('id', $purchasedProductIds)
+                ->whereNotIn('category', $purchasedCategories)
+                ->inRandomOrder()
+                ->limit(100)
+                ->get();
+
+            // Csoportosítjuk kategóriánként
+            $groupedByCategory = $candidates->groupBy('category');
+
+            foreach ($groupedByCategory as $productsInCategory) {
+                if ($productsInCategory->isNotEmpty()) {
+                    $recommendedProducts->push($productsInCategory->random());
+                }
+            }
+
+            // Ha nincs meg 4 ajánlás, pótoljuk random más termékekkel
+            if ($recommendedProducts->count() < 4) {
+                $missing = 4 - $recommendedProducts->count();
+
+                $additionalProducts = Product::whereNotIn('id', array_merge(
+                    $purchasedProductIds,
+                    $recommendedProducts->pluck('id')->toArray()
+                ))
+                    ->whereNotIn('category', $purchasedCategories)
+                    ->inRandomOrder()
+                    ->limit($missing)
+                    ->get();
+
+                $recommendedProducts = $recommendedProducts->merge($additionalProducts);
+            }
+
+            $recommendedProducts = $recommendedProducts->take(4);
+        }
+
+        return view('orders.thank_you', compact('order', 'recommendedProducts'));
     }
+
 }

@@ -14,5 +14,22 @@
     <!-- Visszairányítás a főoldalra -->
     <a href="{{ route('home') }}">Go back to homepage</a>
 </div>
+
+@if ($recommendedProducts->isNotEmpty())
+    <section class="recommended-thankyou">
+        <h3>🎁 Ajánlott termékek a következő vásárlásodhoz</h3>
+        <div class="product-grid">
+            @foreach ($recommendedProducts as $product)
+                <a href="{{ route('products.details', ['id' => $product->id]) }}" class="product-card">
+                    <img src="{{ asset($product->image) }}" alt="{{ $product->name }}">
+                    <h4>{{ $product->name }}</h4>
+                    <p>{{ number_format($product->price, 2) }} lei</p>
+                </a>
+            @endforeach
+        </div>
+    </section>
+@endif
+
+
 </body>
 </html>

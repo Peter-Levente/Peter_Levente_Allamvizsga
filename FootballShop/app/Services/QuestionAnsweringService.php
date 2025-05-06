@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use App\Services\OpenAIService;
+use App\VectorStores\PgsqlVectorStore;
+use LLPhant\Embeddings\EmbeddingGenerator\OpenAI\OpenAI3SmallEmbeddingGenerator;
 
 class QuestionAnsweringService
 {
@@ -15,33 +15,49 @@ class QuestionAnsweringService
         $this->openai = $openai;
     }
 
-    /**
-     * Kérdésre válaszol a PostgreSQL-ben tárolt embeddingek alapján.
-     */
     public function answer(string $question): string
     {
-        // 1. Lekérdező kérdés embedding generálása az OpenAI API-n keresztül
-        $embedding = $this->openai->generateEmbedding($question);
+        $embeddingGenerator = new OpenAI3SmallEmbeddingGenerator();
+        $embedding = $embeddingGenerator->embedText($question);
 
-        // 2. Az embedding tömböt átalakítjuk szöveggé, hogy SQL lekérdezésben használható legyen
-        $embeddingStr = '[' . implode(',', $embedding) . ']';
+        $vectorStore = new PgsqlVectorStore();
+        $similarDocs = $vectorStore->similaritySearch($embedding);
 
-        // 3. Hasonlóság alapján lekérjük a 3 legközelebbi dokumentumot a PostgreSQL-ből
-        // Az <#> operátor a pgvector hasonlósági kereséshez használt cosine distance
-        $results = DB::connection('pgsql')->select("
-            SELECT *, embedding <#> CAST(? AS vector) AS distance
-            FROM embeddings
-            ORDER BY embedding <#> CAST(? AS vector)
-            LIMIT 3;
-        ", [$embeddingStr, $embeddingStr]);
+        if (empty($similarDocs)) {
+            return "Sajnálom, nem találtam releváns információt a kérdésedhez.";
+        }
 
-        // 4. A 3 legrelevánsabb dokumentum tartalmát összefűzzük egy kontextus szöveggé
-        $context = collect($results)->pluck('content')->implode("\n---\n");
+        $context = collect($similarDocs)->pluck('content')->implode("\n---\n");
 
-        // 5. Egy promptot készítünk, amely tartalmazza a kérdést és a kontextust
-        $prompt = "A következő kontextus alapján válaszolj a kérdésre: \"$question\"\n\nKontextus:\n$context";
+//        Hivatalosabb valasz
 
-        // 6. Meghívjuk az OpenAI chat API-t, hogy a modell válaszoljon
+//        $prompt = <<<PROMPT
+//Kérlek, válaszolj a vásárlói kérdésre az alábbi termékleírás vagy szöveg alapján. A válasz legyen pontos, és épüljön a szöveg tartalmára. Ha a kérdésre nem található egyértelmű válasz, írd azt, hogy "Sajnálom, erről nem áll rendelkezésemre információ."
+//
+//Kérdés: "{$question}"
+//
+//Termékleírás / szöveg:
+//{$context}
+//
+//Fontos: A választ a megadott szövegre alapozd, lehetőleg idézd is. Kérlek, egészítsd ki a választ rövid magyarázattal vagy kiegészítéssel, akár új információval is, de csak akkor, ha az szorosan kapcsolódik a szöveg témájához, és nem mond ellent annak tartalmának.
+//PROMPT;
+
+
+//        Chatbotos vasarloknak szant valasz
+
+        $prompt = <<<PROMPT
+Kérlek, válaszolj a vásárlói kérdésre az alábbi termékleírás vagy szöveg alapján. A válaszod legyen segítőkész, érthető és barátságos, mintha egy webshop ügyfélszolgálata válaszolna. Ha a kérdésre nem található egyértelmű válasz, írd azt, hogy "Sajnálom, erről nem áll rendelkezésemre információ."
+
+Kérdés: "{$question}"
+
+Termékleírás / szöveg:
+{$context}
+
+Fontos: A válasz a megadott szövegre épüljön, lehetőleg idézve belőle. Kiegészítheted rövid magyarázattal vagy új információval is, amennyiben az szorosan kapcsolódik a szöveg témájához, és nem mond ellent annak tartalmának. A hangnem maradjon vásárlóbarát és segítőkész.
+PROMPT;
+
+
+
         return $this->openai->chat($prompt);
     }
 }

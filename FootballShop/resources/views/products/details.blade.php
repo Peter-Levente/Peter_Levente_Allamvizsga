@@ -122,6 +122,21 @@
         @else
             <p>Product not found.</p>
         @endif
+
+        @if (!empty($similarProducts))
+            <section class="related-products">
+                <h3>Hasonló termékek, amik érdekelhetnek</h3>
+                <div class="product-grid">
+                    @foreach ($similarProducts as $similar)
+                        <a href="{{ route('products.details', ['id' => $similar->id]) }}" class="product-card">
+                            <img src="{{ asset($similar->image) }}" alt="{{ $similar->name }}">
+                            <h4>{{ $similar->name }}</h4>
+                            <p>{{ number_format($similar->price, 2) }} lei</p>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </main>
 
 
@@ -130,6 +145,9 @@
             <p>All rights reserved ©Football Shop 2025</p>
         </div>
     </footer>
+
+    {{-- Chatbot widget minden oldalra --}}
+    @include('components.chatbot-widget')
 </div>
 </body>
 </html>

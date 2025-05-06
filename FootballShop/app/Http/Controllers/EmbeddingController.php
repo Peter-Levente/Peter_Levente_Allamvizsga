@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+
 use Illuminate\Http\Request;
 use App\Services\EmbeddingService;
+
 
 class EmbeddingController extends Controller
 {
@@ -46,5 +48,12 @@ class EmbeddingController extends Controller
         );
 
         return response()->json(['message' => 'Embedding saved successfully', 'data' => $embedding]);
+    }
+
+
+    public function syncProductEmbeddingsToPostgres()
+    {
+        $this->embeddingService->syncProductEmbeddingsToPostgres();
+        return response()->json(['message' => '✅ Embeddingek szinkronizálva a PostgreSQL-be.']);
     }
 }

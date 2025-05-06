@@ -26,7 +26,7 @@
 
             <h3>Items:</h3>
             <ul>
-                @foreach ($order->items as $item) <!-- A rendelés tételeit végigiteráljuk -->
+                @foreach ($order->orderItems as $item) <!-- A rendelés tételeit végigiteráljuk -->
                 <li>
                     <img src="{{ asset($item->product->image) }}" alt="{{ $item->product->name }}" style="width: 50px; height: 50px;">
                     {{ $item->product->name }}

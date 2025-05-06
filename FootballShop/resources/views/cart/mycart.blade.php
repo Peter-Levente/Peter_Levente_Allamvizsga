@@ -75,6 +75,39 @@
         @else
             <p class="empty-cart">Your cart is empty!</p>
         @endif
+
+        @if (!empty($similarProducts))
+            <section class="related-products">
+                <h3>Hasonló termékek, amik érdekelhetnek</h3>
+                <div class="product-grid">
+                    @foreach ($similarProducts as $similar)
+                        <a href="{{ route('products.details', ['id' => $similar->id]) }}" class="product-card">
+                            <img src="{{ asset($similar->image) }}" alt="{{ $similar->name }}">
+                            <h4>{{ $similar->name }}</h4>
+                            <p>{{ number_format($similar->price, 2) }} lei</p>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+
+        @if ($recommendedProducts->isNotEmpty())
+            <section class="recommended-cross-sell">
+                <h3>🛍️ Ezt még érdemes megnézned</h3>
+                <div class="product-grid">
+                    @foreach ($recommendedProducts as $product)
+                        <a href="{{ route('products.details', ['id' => $product->id]) }}" class="product-card">
+                            <img src="{{ asset($product->image) }}" alt="{{ $product->name }}">
+                            <h4>{{ $product->name }}</h4>
+                            <p>{{ number_format($product->price, 2) }} lei</p>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+
     </main>
 </div>
 </body>

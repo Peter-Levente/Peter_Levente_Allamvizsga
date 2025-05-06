@@ -65,8 +65,32 @@
         </nav>
     </header>
 
+
+    <div>
+        @if ($recommendedProducts->count() > 0)
+            <section class="personal-recommendations">
+                <h2>🎯 Neked ajánlott termékek</h2>
+                <div class="product-grid">
+                    @foreach ($recommendedProducts as $product)
+                        <a href="{{ route('products.details', ['id' => $product->id]) }}" class="product-card">
+                            <img src="{{ asset($product->image) }}" alt="{{ $product->name }}">
+                            <h4>{{ $product->name }}</h4>
+                            <p>{{ number_format($product->price, 2) }} lei</p>
+                            @if (!is_null($product->distance))
+                                <small style="font-size: 0.8rem; color: #666;">Távolság: {{ number_format($product->distance, 4) }}</small>
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+    </div>
+
     <main>
-        @forelse ($products as $product)
+
+
+
+    @forelse ($products as $product)
             <a href="{{ route('products.details', $product->id) }}" class="product">
                 <div>
                     <img src="{{ $product->image }}" alt="{{ $product->name }}">
@@ -84,6 +108,9 @@
             <p>All rights reserved ©Football Shop 2025</p>
         </div>
     </footer>
+
+    {{-- Chatbot widget minden oldalra --}}
+    @include('components.chatbot-widget')
 </div>
 </body>
 </html>

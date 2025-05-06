@@ -9,5 +9,7 @@ Route::middleware('api')->group(function () {
     Route::post('/generate-small-embedding', [EmbeddingController::class, 'generateSmallEmbedding']);
     Route::post('/store_embedding', [EmbeddingController::class, 'store']);
     Route::post('/ask-question', [QuestionAnswerController::class, 'ask']);
+    Route::get('/sync-embeddings', [EmbeddingController::class, 'syncProductEmbeddingsToPostgres']);
+
 
 });

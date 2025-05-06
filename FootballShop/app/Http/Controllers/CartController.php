@@ -2,26 +2,74 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ProductAddedToCart;
+use App\Services\UserInterestProfileUpdater;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
     // Kosár megtekintése
     public function index()
     {
-        $this->cleanupOldCarts(); // Régi kosártételek törlése
+        $userId = auth()->id();
+        $cartItems = Cart::with('product')->where('user_id', $userId)->get();
+        $productIds = $cartItems->pluck('product_id')->toArray();
+        $totalPrice = $cartItems->sum(function ($item) {
+            return $item->product->price * $item->quantity;
+        });
 
-        $user = Auth::user();
-        $cartItems = Cart::where('user_id', $user->id)->with('product')->get();
+        $recommendedProducts = collect();
 
-        $totalPrice = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
+        if ($cartItems->isNotEmpty()) {
+            $originalCategories = $cartItems->pluck('product.category')->unique()->toArray();
 
-        return view('cart.mycart', compact('cartItems', 'totalPrice'));
+            // Random termékek lekérése, kizárva a kosárban lévő kategóriákat és termékeket
+            $candidates = Product::whereNotIn('id', $productIds)
+                ->whereNotIn('category', $originalCategories)
+                ->inRandomOrder()
+                ->limit(100)
+                ->get();
+
+            // Csoportosítjuk kategóriák szerint
+            $groupedByCategory = $candidates->groupBy('category');
+
+            foreach ($groupedByCategory as $productsInCategory) {
+                if ($productsInCategory->isNotEmpty()) {
+                    $recommendedProducts->push($productsInCategory->random());
+                }
+            }
+
+            // 🔥 Ha még nincs 4 ajánlás, egészítsük ki random termékekkel
+            if ($recommendedProducts->count() < 4) {
+                $missing = 4 - $recommendedProducts->count();
+
+                $additionalProducts = Product::whereNotIn('id', array_merge(
+                    $productIds,
+                    $recommendedProducts->pluck('id')->toArray()
+                ))
+                    ->whereNotIn('category', $originalCategories)
+                    ->inRandomOrder()
+                    ->limit($missing)
+                    ->get();
+
+                $recommendedProducts = $recommendedProducts->merge($additionalProducts);
+            }
+
+            // Max 4 biztosan
+            $recommendedProducts = $recommendedProducts->take(4);
+        }
+
+        return view('cart.mycart', compact('cartItems', 'recommendedProducts', 'totalPrice'));
     }
+
+
+
+
 
     // Termék hozzáadása a kosárhoz
     public function addToCart(Request $request)
@@ -66,6 +114,8 @@ class CartController extends Controller
         // A méretet csak a session-ben tároljuk
         session(['size_' . $request->product_id => $request->size]);
 
+        ProductAddedToCart::dispatch(auth()->id());
+
         return redirect()->route('cart.mycart')->with('success', 'A termék sikeresen hozzáadva a kosárhoz!');
     }
 
@@ -95,6 +145,9 @@ class CartController extends Controller
         }
 
         $cart->delete();
+
+        // 🔁 Profil újraszámolása, immár a törölt termék nélkül
+        app(UserInterestProfileUpdater::class)->update(Auth::id());
 
         return redirect()->route('cart.mycart')->with('success', 'Item removed from cart!');
     }

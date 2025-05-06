@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Embedding;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use LLPhant\Embeddings\DataReader\FileDataReader;
 use LLPhant\Embeddings\DocumentSplitter\DocumentSplitter;
@@ -78,5 +78,35 @@ class EmbeddingService
         ]);
     }
 
+    public function syncProductEmbeddingsToPostgres()
+    {
+        $products = Product::all();
 
+        foreach ($products as $product) {
+            $text = "{$product->name}. Kategória: {$product->category}. Leírás: {$product->description}";
+
+            $response = $this->client->embeddings()->create([
+                'model' => 'text-embedding-3-small',
+                'input' => $text,
+            ]);
+
+            $vector = $response['data'][0]['embedding'];
+
+            if (is_array($vector) && count($vector) > 0) {
+                $pgVector = '[' . implode(',', $vector) . ']';
+
+                DB::connection('pgsql')->table('product_embeddings')->updateOrInsert(
+                    ['product_id' => $product->id],
+                    [
+                        'name' => $product->name,
+                        'embedding' => DB::raw("'$pgVector'::vector"),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
+        }
+
+        return true;
+    }
 }
