@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Embedding extends Model
 {
     use HasFactory;
-    protected $connection = 'pgsql'; // PostgreSQL kapcsolat használata
     protected $table = 'embeddings';
 
     protected $fillable = [

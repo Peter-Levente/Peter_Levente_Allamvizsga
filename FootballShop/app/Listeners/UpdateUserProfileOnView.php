@@ -36,7 +36,4 @@ class UpdateUserProfileOnView
         // A felhasználói profil frissítése az új megtekintés alapján
         app(UserInterestProfileUpdater::class)->update($event->userId);
     }
-
-
-
 }

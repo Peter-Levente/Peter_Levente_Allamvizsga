@@ -16,6 +16,8 @@ class CartController extends Controller
     // Kosár megtekintése
     public function index()
     {
+        $this->cleanupUserCart();
+
         $userId = auth()->id();
         $cartItems = Cart::with('product')->where('user_id', $userId)->get();
         $productIds = $cartItems->pluck('product_id')->toArray();
@@ -153,11 +155,16 @@ class CartController extends Controller
     }
 
 
-    public function cleanupOldCarts()
+    public function cleanupUserCart()
     {
-        // Törli azokat a kosártételeket, amelyek 1 napnál régebbiek
-        $deletedRows = Cart::where('created_at', '<', Carbon::now()->subDay())->delete();
-        return $deletedRows;
+        $userId = auth()->id();
+
+        if ($userId) {
+            Cart::where('user_id', $userId)
+                ->where('created_at', '<', now()->subDay())
+                ->delete();
+        }
     }
+
 
 }

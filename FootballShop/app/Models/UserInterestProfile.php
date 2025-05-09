@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserInterestProfile extends Model
 {
-    protected $connection = 'pgsql'; // PostgreSQL-ben van
 
     protected $fillable = ['user_id', 'embedding'];
 

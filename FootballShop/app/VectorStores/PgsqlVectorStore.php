@@ -28,7 +28,7 @@ class PgsqlVectorStore extends VectorStoreBase
         }
     }
 
-    public function similaritySearch(array $embedding, int $k = 1, array $additionalArguments = []): iterable
+    public function similaritySearch(array $embedding, int $k = 3, array $additionalArguments = []): iterable
     {
         $embeddingStr = '[' . implode(',', $embedding) . ']';
         $similarityThreshold = $additionalArguments['threshold'] ?? -0.30; // alapértelmezett érték

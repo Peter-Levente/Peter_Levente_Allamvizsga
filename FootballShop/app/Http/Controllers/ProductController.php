@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Events\ProductViewed;
 use App\Models\Product;
-use App\Models\ProductView;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller

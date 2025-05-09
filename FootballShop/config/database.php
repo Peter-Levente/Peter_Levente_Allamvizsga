@@ -83,17 +83,18 @@ return [
         ],
 
         'pgsql' => [
-            'driver' => 'pgsql',
-            'host' => env('PGSQL_HOST', '127.0.0.1'),
-            'port' => env('PGSQL_PORT', '5433'),
-            'database' => env('PGSQL_DATABASE'),
-            'username' => env('PGSQL_USERNAME'),
-            'password' => env('PGSQL_PASSWORD'),
-            'charset' => 'utf8',
-            'prefix' => '',
-            'schema' => 'public',
-            'sslmode' => 'disable',
+            'driver'   => 'pgsql',
+            'host'     => env('DB_HOST', '127.0.0.1'),
+            'port'     => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'state_examination'),
+            'username' => env('DB_USERNAME', 'postgres'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset'  => 'utf8',
+            'prefix'   => '',
+            'schema'   => 'public',
+            'sslmode'  => 'disable',
         ],
+
 
         'sqlsrv' => [
             'driver' => 'sqlsrv',
