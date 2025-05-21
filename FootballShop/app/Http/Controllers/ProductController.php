@@ -4,14 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Events\ProductViewed;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
     // Minden termék lekérdezése
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();  // Összes termék lekérése
+
+        // --- 🔍 Keresés és rendezés ---
+        $query = Product::query();
+
+        // Keresés név alapján (GET['search'])
+        if ($request->filled('search')) {
+            $query->where('name', 'ilike', '%' . $request->search . '%');
+        }
+
+        // Rendezés a kiválasztott opció alapján (GET['sort'])
+        if ($request->filled('sort')) {
+            switch ($request->sort) {
+                case 'price_asc':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_desc':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'name_asc':
+                    $query->orderBy('name', 'asc');
+                    break;
+                case 'name_desc':
+                    $query->orderBy('name', 'desc');
+                    break;
+            }
+        }
+
+        $products = $query->get(); // Szűrt és/vagy rendezett termékek
+
         $recommendedProducts = collect();
 
         if (auth()->check()) {
@@ -46,10 +75,6 @@ class ProductController extends Controller
     }
 
 
-
-
-
-
     // Egyetlen termék lekérdezése ID alapján
     public function show($id)
     {
@@ -74,7 +99,7 @@ class ProductController extends Controller
             FROM product_embeddings pe
             WHERE pe.product_id != ?
             ORDER BY distance
-            LIMIT 4
+            LIMIT 10
         ", [$embeddingRow->embedding, $product->id]);
 
             $ids = array_map(fn($item) => $item->product_id, $similarRows);
@@ -96,13 +121,38 @@ class ProductController extends Controller
 
 
     // Kategória alapján termékek lekérdezése
-    public function showcategory($category)
+    public function showcategory(Request $request, $category)
     {
         $products = Product::where('category', $category)->get(); // Lekérjük a kategória szerinti termékeket
 
         if ($products->isEmpty()) {
             return redirect()->route('products.index')->with('error', 'No products found in this category.');
         }
+
+        $query = Product::where('category', $category);
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('sort')) {
+            switch ($request->sort) {
+                case 'price_asc':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_desc':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'name_asc':
+                    $query->orderBy('name', 'asc');
+                    break;
+                case 'name_desc':
+                    $query->orderBy('name', 'desc');
+                    break;
+            }
+        }
+
+        $products = $query->get();
 
         return view('products.category', compact('products', 'category'));
     }

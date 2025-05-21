@@ -3,54 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Shop - Home</title>
+    <title>Football Shop - Category</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/PROJECT.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="index-page category-page">
 <div class="wrapper">
     <header>
         <nav class="header">
-            <div class="title">
-                <h1>Football Shop</h1>
-
-                <div class="auth-buttons">
-                    @if (!auth()->check())
-                        <a href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-                        <a href="{{ route('register') }}"><i class="fa-solid fa-user-plus"></i> Registration</a>
-                    @endif
+            <div class="topbar">
+                <div class="center">
+                    <h1>Football Shop</h1>
                 </div>
 
-                <div class="auth-buttons">
-                    @if (auth()->check())
+                <!-- Mobil ikon-sáv -->
+                <div class="icon-bar">
+                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+
+                    <a href="{{ url('/') }}"><i class="fa-solid fa-house"></i> <span></span></a>
+
+                    @if (!auth()->check())
+                        <a href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket"></i></a>
+                        <a href="{{ route('register') }}"><i class="fa-solid fa-user-plus"></i></a>
+                    @else
                         <a href="{{ route('logout') }}"
                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                            <i class="fa-solid fa-right-from-bracket"></i>
                         </a>
-
-                        <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
-
-                        <span class="welcome-message">Welcome, {{ auth()->user()->name }}!</span>
                     @endif
+                    <a href="{{ route('orders.myorders') }}"><i class="fa-solid fa-box"></i></a>
+                    <a href="{{ route('cart.mycart') }}"><i class="fa-solid fa-cart-shopping"></i></a>
+
+                    <button type="button" class="search-toggle" onclick="toggleMobileSearchBar()">
+                        <i class="fa fa-search"></i>
+                    </button>
+
+                    <form method="GET" action="{{ route('home') }}" id="mobile-search-bar" class="search-form">
+                        <input type="text" name="search" placeholder="Search products" value="{{ request('search') }}">
+                        <button type="submit"><i class="fa fa-search"></i></button>
+                    </form>
                 </div>
 
-                <div class="header-actions">
-                    @if (!Request::is('/'))
-                        <a href="{{ url('/') }}" class="home-link">
-                            <i class="fa-solid fa-house"></i> Home
-                        </a>
-                    @endif
+                <div class="left">
+                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                    <div class="auth-buttons">
+                        @if (!auth()->check())
+                            <a href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket"></i>
+                                <span>Login</span></a>
+                            <a href="{{ route('register') }}"><i class="fa-solid fa-user-plus"></i>
+                                <span>Registration</span></a>
+                        @else
+                            <a href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                            </a>
+                            <form id="logout-form" method="POST" action="{{ route('logout') }}"
+                                  style="display: none;">@csrf</form>
+                            <span class="welcome-message">Welcome, {{ auth()->user()->name }}!</span>
+                        @endif
+                    </div>
+                </div>
 
-                    @if (auth()->check())
-                        <a id="cart-icon" href="{{ route('cart.mycart') }}" class="header-link">
-                            <i class="fa-solid fa-basket-shopping"></i> My Cart
-                        </a>
-                        <a id="orders-icon" href="{{ route('orders.myorders') }}" class="header-link">
-                            <i class="fa-solid fa-box"></i> My Orders
-                        </a>
-                    @endif
+                <div class="right">
+                    <div class="header-actions">
+                        <div class="search-container">
+                            <button type="button" class="search-toggle" onclick="toggleSearchBar()">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            <form method="GET" action="{{ route('home') }}" id="search-bar" class="search-form">
+                                <input type="text" name="search" placeholder="Search products"
+                                       value="{{ request('search') }}">
+                                <button type="submit"><i class="fa fa-search"></i></button>
+                            </form>
+                        </div>
+
+                        <a href="{{ url('/') }}"><i class="fa-solid fa-house"></i> <span>Home</span></a>
+
+                        @if (auth()->check())
+                            <a href="{{ route('cart.mycart') }}"><i class="fa-solid fa-basket-shopping"></i> <span>My Cart</span></a>
+                            <a href="{{ route('orders.myorders') }}"><i class="fa-solid fa-box"></i>
+                                <span>My Orders</span></a>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -61,10 +99,34 @@
                 <a href="{{ route('products.category', ['category' => 'Balls']) }}">Football Balls</a>
                 <a href="{{ route('products.category', ['category' => 'Equipment']) }}">Football Equipment</a>
             </div>
+
+            <div class="mobile-menu">
+                <a href="{{ route('products.category', ['category' => 'Clothings']) }}">Club Apparel</a>
+                <a href="{{ route('products.category', ['category' => 'Jerseys']) }}">Club Jerseys</a>
+                <a href="{{ route('products.category', ['category' => 'Shoes']) }}">Football Shoes</a>
+                <a href="{{ route('products.category', ['category' => 'Balls']) }}">Football Balls</a>
+                <a href="{{ route('products.category', ['category' => 'Equipment']) }}">Football Equipment</a>
+            </div>
         </nav>
     </header>
 
-    <main>
+    <div>
+        <form method="GET" action="{{ url()->current() }}" id="sort-form" style="margin: 20px 0;">
+            <label for="sort">Sort by:</label>
+            <select name="sort" id="sort" onchange="handleSortAndScroll()">
+                <option value="">-- Choose --</option>
+                <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High
+                </option>
+                <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low
+                </option>
+                <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Name: A-Z</option>
+                <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>Name: Z-A</option>
+            </select>
+            <button type="button" onclick="resetSorting()" style="margin-left: 10px;">Reset sorting</button>
+        </form>
+    </div>
+
+    <main id="product-list">
         @forelse ($products as $product)
             <a href="{{ route('products.details', $product->id) }}" class="product">
                 <div>

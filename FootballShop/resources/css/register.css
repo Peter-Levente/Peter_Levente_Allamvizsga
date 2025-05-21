@@ -1,56 +1,53 @@
-/* Alapstílusok */
-body {
+.register-page {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4; /* Világosszürke háttér */
-    color: #333; /* Sötétszürke szöveg */
+    background-color: #f4f4f4;
+    color: #333;
     margin: 0;
     padding: 0;
 }
-
-/* Fejléc stílus */
-h1 {
-    color: red; /* Piros cím */
+.register-page h1 {
+    color: red;
     text-align: center;
     padding: 20px;
-    background-color: #333; /* Fekete háttér */
+    background-color: #333;
     margin: 0;
 }
-
-/* Form stílusok */
-form {
-    background-color: #bbb; /* Szürke háttér */
+.register-page form {
+    background-color: #bbb;
     padding: 20px;
     width: 300px;
     margin: 20px auto;
     border-radius: 8px;
 }
-
-label {
+.register-page label {
     display: block;
     margin-bottom: 10px;
     font-size: 16px;
     color: #333;
 }
-
-input {
+.register-page input {
     width: 100%;
     padding: 8px;
     margin: 8px 0;
     border-radius: 4px;
     border: 1px solid #ccc;
 }
-
-button {
+.register-page button {
     width: 100%;
     padding: 10px;
-    background-color: #333; /* Fekete gomb */
+    background-color: #333;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
 }
-
-button:hover {
-    background-color: #555; /* Sötétszürke hover effektus */
+.register-page button:hover {
+    background-color: #555;
+}
+.register-page .error {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: block;
 }

@@ -1,22 +1,22 @@
+<!-- resources/views/cart.checkout.blade.php -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Checkout</title>
-    <link rel="stylesheet" href="{{ asset('css/checkout_style.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="checkout-page">
 <div class="container">
     <h1>Checkout</h1>
 
-    <!-- Hibaüzenet megjelenítése -->
     @if (session('error'))
         <p style="color: red;">{{ session('error') }}</p>
     @endif
 
-    <!-- A rendelés feladása -->
     <form method="POST" action="{{ route('order.place') }}">
-        @csrf  <!-- CSRF token a biztonságos űrlapküldéshez -->
+        @csrf
 
         <label for="name">Full Name:</label>
         <input type="text" name="name" id="name" value="{{ old('name') }}" required>
@@ -35,7 +35,6 @@
 
         <input type="hidden" name="total_amount" value="{{ $totalPrice }}">
 
-        <!-- Kosár összegének kiszámítása -->
         <p>Total Price: {{ number_format($totalPrice, 2) }} lei</p>
 
         <button type="submit">Place Order</button>

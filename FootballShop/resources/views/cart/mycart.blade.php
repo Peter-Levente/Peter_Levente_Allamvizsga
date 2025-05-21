@@ -1,12 +1,14 @@
+<!-- resources/views/cart.mycart.blade.php -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Cart</title>
-    <link rel="stylesheet" href="{{ asset('css/cart.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="cart-page">
 <div class="container">
     <header>
         <nav class="navbar">
@@ -19,7 +21,7 @@
         </nav>
     </header>
 
-    <main class="cart-page">
+    <main class="cart-section">
         <h2 class="cart-title">Your Shopping Cart</h2>
 
         @if ($cartItems->isNotEmpty())
@@ -38,11 +40,11 @@
                 <tbody>
                 @foreach ($cartItems as $item)
                     <tr>
-                        <td><img src="{{ asset($item->product->image) }}" alt="{{ $item->product->name }}"></td>
-                        <td class="item-name">{{ $item->product->name }}</td>
-                        <td class="item-price">{{ number_format($item->product->price, 2) }} lei</td>
-                        <td class="item-size">{{ session('size_' . $item->product->id) }}</td>
-                        <td class="item-quantity">
+                        <td data-label="Product"><img src="{{ asset($item->product->image) }}" alt="{{ $item->product->name }}"></td>
+                        <td data-label="Name" class="item-name">{{ $item->product->name }}</td>
+                        <td data-label="Price" class="item-price">{{ number_format($item->product->price, 2) }} lei</td>
+                        <td data-label="Size" class="item-size">{{ session('size_' . $item->product->id) }}</td>
+                        <td data-label="Quantity" class="item-quantity">
                             <form method="post" action="{{ route('cart.update', $item->id) }}">
                                 @csrf
                                 @method('PUT')
@@ -50,9 +52,8 @@
                                 <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" onchange="this.form.submit()">
                             </form>
                         </td>
-
-                        <td class="item-total">{{ number_format($item->product->price * $item->quantity, 2) }} lei</td>
-                        <td>
+                        <td data-label="Total" class="item-total">{{ number_format($item->product->price * $item->quantity, 2) }} lei</td>
+                        <td data-label="Actions">
                             <form method="post" action="{{ route('cart.remove', $item->id) }}">
                                 @csrf
                                 @method('DELETE')
@@ -76,25 +77,9 @@
             <p class="empty-cart">Your cart is empty!</p>
         @endif
 
-        @if (!empty($similarProducts))
-            <section class="related-products">
-                <h3>Hasonló termékek, amik érdekelhetnek</h3>
-                <div class="product-grid">
-                    @foreach ($similarProducts as $similar)
-                        <a href="{{ route('products.details', ['id' => $similar->id]) }}" class="product-card">
-                            <img src="{{ asset($similar->image) }}" alt="{{ $similar->name }}">
-                            <h4>{{ $similar->name }}</h4>
-                            <p>{{ number_format($similar->price, 2) }} lei</p>
-                        </a>
-                    @endforeach
-                </div>
-            </section>
-        @endif
-
-
         @if ($recommendedProducts->isNotEmpty())
             <section class="recommended-cross-sell">
-                <h3>🛍️ Ezt még érdemes megnézned</h3>
+                <h3>🛍️ You should also check these out</h3>
                 <div class="product-grid">
                     @foreach ($recommendedProducts as $product)
                         <a href="{{ route('products.details', ['id' => $product->id]) }}" class="product-card">
@@ -106,8 +91,6 @@
                 </div>
             </section>
         @endif
-
-
     </main>
 </div>
 </body>
