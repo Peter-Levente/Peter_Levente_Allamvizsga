@@ -4,49 +4,59 @@ namespace App\Http\Controllers;
 
 use App\Events\ProductAddedToCart;
 use App\Services\UserInterestProfileUpdater;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
 
+// A kosár kezeléséért felelős kontroller: megtekintés, hozzáadás, frissítés, törlés
 class CartController extends Controller
 {
-    // Kosár megtekintése
+    /**
+     * Kosár tartalmának megjelenítése, ajánlott termékekkel
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
+        // Régi kosárelemek törlése (1 napnál idősebbek)
         $this->cleanupUserCart();
 
         $userId = auth()->id();
+
+        // A felhasználó kosarában lévő termékek lekérése a kapcsolt termékekkel együtt
         $cartItems = Cart::with('product')->where('user_id', $userId)->get();
         $productIds = $cartItems->pluck('product_id')->toArray();
+
+        // Teljes ár kiszámítása
         $totalPrice = $cartItems->sum(function ($item) {
             return $item->product->price * $item->quantity;
         });
 
         $recommendedProducts = collect();
 
+        // Ha van termék a kosárban, kezdjük el az ajánlórendszert
         if ($cartItems->isNotEmpty()) {
             $originalCategories = $cartItems->pluck('product.category')->unique()->toArray();
 
-            // Random termékek lekérése, kizárva a kosárban lévő kategóriákat és termékeket
+            // Kiválasztunk véletlenszerűen termékeket, amik nem szerepelnek a kosárban és más a kategóriájúak
             $candidates = Product::whereNotIn('id', $productIds)
                 ->whereNotIn('category', $originalCategories)
                 ->inRandomOrder()
                 ->limit(100)
                 ->get();
 
-            // Csoportosítjuk kategóriák szerint
+            // Kategóriánként csoportosítjuk a termékeket
             $groupedByCategory = $candidates->groupBy('category');
 
+            // Minden kategóriából véletlenszerűen egy terméket ajánlunk
             foreach ($groupedByCategory as $productsInCategory) {
                 if ($productsInCategory->isNotEmpty()) {
                     $recommendedProducts->push($productsInCategory->random());
                 }
             }
 
-            // 🔥 Ha még nincs 4 ajánlás, egészítsük ki random termékekkel
+            // Ha még nincs 4 ajánlott termék, akkor véletlenszerűen kiegészítjük
             if ($recommendedProducts->count() < 4) {
                 $missing = 4 - $recommendedProducts->count();
 
@@ -62,18 +72,19 @@ class CartController extends Controller
                 $recommendedProducts = $recommendedProducts->merge($additionalProducts);
             }
 
-            // Max 4 biztosan
+            // Végleges ajánlási lista (max. 4 termék)
             $recommendedProducts = $recommendedProducts->take(4);
         }
 
         return view('cart.mycart', compact('cartItems', 'recommendedProducts', 'totalPrice'));
     }
 
-
-
-
-
-    // Termék hozzáadása a kosárhoz
+    /**
+     * Termék hozzáadása a kosárhoz
+     *
+     * @param Request $request A HTTP kérés objektuma
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function addToCart(Request $request)
     {
         $userId = auth()->id();
@@ -81,7 +92,7 @@ class CartController extends Controller
             return redirect()->route('login')->with('error', 'Be kell jelentkezned a vásárláshoz!');
         }
 
-        // Validáció
+        // Bemeneti adatok validálása
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1|max:50',
@@ -90,22 +101,22 @@ class CartController extends Controller
 
         $product = Product::find($request->product_id);
 
-        // Ha valamiért még mindig nem létezne a termék (bár az exists miatt ez ritka)
+        // Ha nem található a termék
         if (!$product) {
             return redirect()->route('cart.mycart')->with('error', 'A termék nem található!');
         }
 
-        // Kosár adatainak ellenőrzése az adatbázisban
+        // Ellenőrizzük, hogy már létezik-e a termék a kosárban
         $cartItem = Cart::where('user_id', $userId)
             ->where('product_id', $request->product_id)
             ->first();
 
         if ($cartItem) {
-            // Ha már létezik a termék a kosárban, akkor frissítjük a mennyiséget
+            // Ha igen, frissítjük a mennyiséget
             $cartItem->quantity += $request->quantity;
             $cartItem->save();
         } else {
-            // Ha még nem létezik a termék a kosárban, hozzáadjuk
+            // Ha nem, új rekordot hozunk létre
             Cart::create([
                 'user_id' => $userId,
                 'product_id' => $request->product_id,
@@ -113,22 +124,29 @@ class CartController extends Controller
             ]);
         }
 
-        // A méretet csak a session-ben tároljuk
+        // A választott méretet csak a session-ben tároljuk (nem kerül adatbázisba)
         session(['size_' . $request->product_id => $request->size]);
 
+        // Esemény meghívása ajánlórendszerhez
         ProductAddedToCart::dispatch(auth()->id());
 
         return redirect()->route('cart.mycart')->with('success', 'A termék sikeresen hozzáadva a kosárhoz!');
     }
 
-
-    // Mennyiség frissítése
+    /**
+     * Kosárban lévő termék mennyiségének frissítése
+     *
+     * @param Request $request A HTTP kérés objektuma
+     * @param Cart $cart A frissítendő kosárelem
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updateCart(Request $request, Cart $cart)
     {
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
+        // Jogosultság ellenőrzése
         if ($cart->user_id !== Auth::id()) {
             abort(403);
         }
@@ -138,23 +156,32 @@ class CartController extends Controller
         return redirect()->route('cart.mycart')->with('success', 'Cart updated!');
     }
 
-
-    // Termék eltávolítása
+    /**
+     * Termék eltávolítása a kosárból
+     *
+     * @param Cart $cart A törlendő kosárelem
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function removeFromCart(Cart $cart)
     {
+        // Jogosultság ellenőrzése
         if ($cart->user_id !== Auth::id()) {
             abort(403);
         }
 
         $cart->delete();
 
-        // 🔁 Profil újraszámolása, immár a törölt termék nélkül
+        // A felhasználói profil újraszámítása az ajánlórendszerhez
         app(UserInterestProfileUpdater::class)->update(Auth::id());
 
         return redirect()->route('cart.mycart')->with('success', 'Item removed from cart!');
     }
 
-
+    /**
+     * 1 napnál régebbi kosárelemek törlése az adott felhasználótól
+     *
+     * @return void
+     */
     public function cleanupUserCart()
     {
         $userId = auth()->id();
@@ -165,6 +192,4 @@ class CartController extends Controller
                 ->delete();
         }
     }
-
-
 }

@@ -14,7 +14,14 @@ class OrderPlaced
     // A felhasználó azonosítója, aki a rendelést leadta
     public int $userId;
 
-    // Konstruktor, amely átveszi a user ID-t, és eltárolja a példányban
+    /**
+     * Konstruktor
+     *
+     * Ez a metódus akkor hívódik meg, amikor az esemény példányosításra kerül.
+     * Itt kapjuk meg annak a felhasználónak az ID-ját, aki leadta a rendelést.
+     *
+     * @param int $userId A felhasználó azonosítója
+     */
     public function __construct(int $userId)
     {
         $this->userId = $userId;

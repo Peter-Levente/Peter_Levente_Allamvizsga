@@ -5,54 +5,40 @@ namespace App\Services;
 use OpenAI\Client;
 use OpenAI;
 
+// Az OpenAI API-val való kommunikációt kezelő szolgáltatás
 class OpenAIService
 {
     // OpenAI kliens példány
     protected Client $client;
 
     /**
-     * Konstruktor - inicializálja az OpenAI klienst az .env fájlból származó API kulccsal
+     * Konstruktor — inicializálja az OpenAI klienst az .env fájlból származó API kulccsal
      */
     public function __construct()
     {
-
         $this->client = OpenAI::client(env('OPENAI_API_KEY'));
     }
 
     /**
-     * Embedding vektor generálása egy adott szövegre
+     * Chat-válasz generálása egy szöveges prompt alapján
      *
-     * @param string $text A szöveg, amelyre a beágyazást (embeddinget) szeretnénk létrehozni
-     * @return array A beágyazott (vektoros) reprezentáció
-     */
-    public function generateEmbedding(string $text): array
-    {
-        $response = $this->client->embeddings()->create([
-            'model' => 'text-embedding-3-small', // OpenAI beágyazó modell
-            'input' => $text, // A szöveg, amelyet vektorosítunk
-        ]);
-
-        // Az első (és egyetlen) embedding vektor visszaadása
-        return $response->embeddings[0]->embedding;
-    }
-
-    /**
-     * Chat válasz generálása egy prompt alapján
+     * Ez a metódus egy rövid üzenetváltást szimulál a felhasználó és a modell között,
+     * és visszaadja a válaszként generált szöveget.
      *
      * @param string $prompt A felhasználó által megadott kérdés vagy utasítás
-     * @return string A nyelvi modell által generált válasz
+     * @return string A modell által generált válasz szöveg
      */
     public function chat(string $prompt): string
     {
         $response = $this->client->chat()->create([
-            'model' => 'gpt-3.5-turbo', // ChatGPT modell
+            'model' => 'gpt-3.5-turbo', // Az OpenAI ChatGPT modell
             'messages' => [
-                ['role' => 'system', 'content' => 'Te egy segítőkész asszisztens vagy.'], // rendszer szerep
-                ['role' => 'user', 'content' => $prompt], // felhasználói kérdés
+                ['role' => 'system', 'content' => 'Te egy segítőkész asszisztens vagy.'],
+                ['role' => 'user', 'content' => $prompt],
             ],
         ]);
 
-        // A modell által generált válasz szövegének visszaadása
+        // A válasz első változatának szöveges tartalma
         return $response->choices[0]->message->content;
     }
 }

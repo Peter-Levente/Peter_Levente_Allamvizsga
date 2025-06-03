@@ -12,39 +12,54 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+// A rendeléseket és azok kezelését végző kontroller
 class OrderController extends Controller
 {
+    /**
+     * Rendelés véglegesítés oldal megjelenítése a végösszeggel
+     *
+     * @return \Illuminate\View\View
+     */
     public function checkout()
     {
         $user = Auth::user();
 
+        // A felhasználó kosarának betöltése
         $cartItems = Cart::where('user_id', $user->id)->with('product')->get();
 
+        // Teljes ár kiszámítása
         $totalPrice = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
 
-        return view('cart.checkout', compact('totalPrice'));  // View-hoz továbbítjuk
+        return view('cart.checkout', compact('totalPrice'));
     }
 
-    // Külön függvény a rendelés lekérdezésére
-    private function getUserOrders($userId)
-    {
-        return Order::where('user_id', $userId)->with('items.product')->get();
-    }
-
-    // Rendelések megjelenítése
+    /**
+     * A felhasználó korábbi rendeléseinek megjelenítése
+     *
+     * @return \Illuminate\View\View
+     */
     public function myOrders()
     {
         $user = Auth::user();
+
+        // A rendeléseket időrendben lekérjük
         $orders = Order::where('user_id', $user->id)
-            ->with('orderItems.product') // Betöltjük az items kapcsolatot és a termékeket is
+            ->with('orderItems.product')
+            ->orderBy('created_at', 'desc')
             ->get();
 
-
-        return view('orders.myorders', compact('orders'));  // A rendeléseket átadjuk a nézetnek
+        return view('orders.myorders', compact('orders'));
     }
 
+    /**
+     * Rendelés létrehozása az aktuális kosár alapján
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
+        // Validáció
         $request->validate([
             'address' => 'required|string',
             'total_amount' => 'required|numeric',
@@ -54,8 +69,9 @@ class OrderController extends Controller
 
         $userId = Auth::id();
 
+        // Adatbázis tranzakcióban végezzük a rendelés, rendelési tételek létrehozását és a kosár törlését
         $order = DB::transaction(function () use ($request, $userId) {
-            // Rendelés létrehozása
+            // Rendelés mentése
             $order = Order::create([
                 'user_id' => $userId,
                 'address' => $request->address,
@@ -65,10 +81,10 @@ class OrderController extends Controller
                 'status' => 'pending'
             ]);
 
-            // Kosár elemeinek lekérése
+            // Kosár lekérdezése
             $cartItems = Cart::where('user_id', $userId)->get();
 
-            // Rendelési tételek mentése
+            // Kosár elemekből rendelési tételek létrehozása
             foreach ($cartItems as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -78,53 +94,64 @@ class OrderController extends Controller
                 ]);
             }
 
-            // **Kosár kiürítése a rendelés után**
+            // Kosár ürítése
             Cart::where('user_id', $userId)->delete();
 
             return $order;
         });
 
-        // A rendelés leadása után eseményt indítunk, amely jelezheti a rendszer más részeinek,
-        // hogy új rendelés történt. Például: ajánlói profil frissítése.
+        // Esemény küldése az ajánlórendszer vagy más komponens értesítésére
         OrderPlaced::dispatch(auth()->id());
 
+        // Átirányítás a "köszönő" oldalra
         return redirect()->route('orders.thank_you', ['order' => $order->id])
             ->with('success', 'A termék sikeresen le lett adva!');
     }
 
-
+    /**
+     * Rendelés törlése (csak saját rendelés)
+     *
+     * @param int $id A törlendő rendelés azonosítója
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy($id)
     {
+        // A felhasználó csak saját rendelését törölheti
         $order = Order::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         $order->delete();
 
-        // 👉 Itt is érdemes lehet újraszámolni a felhasználói érdeklődési profilt,
-        // mert a rendelés megszűnik, így ne legyen hatással a további ajánlásokra
-        // Visszairányítás a rendeléseket tartalmazó oldalra
+        // Az ajánlórendszer profil újraszámítása a törölt rendelés nélkül
         app(UserInterestProfileUpdater::class)->update(Auth::id());
-
 
         return redirect()->route('orders.myorders')->with('success', 'A rendelés sikeresen törölve lett.');
     }
 
+    /**
+     * "Köszönő oldal" megjelenítése a rendelés után, ajánlott termékekkel
+     *
+     * @param int $orderId A leadott rendelés azonosítója
+     * @return \Illuminate\View\View
+     */
     public function thankYou($orderId)
     {
+        // A rendelés és a hozzá tartozó tételek lekérdezése
         $order = Order::with('orderItems.product')->findOrFail($orderId);
 
+        // A megvásárolt termékek ID-i és kategóriái
         $purchasedProductIds = $order->orderItems->pluck('product.id')->toArray();
         $purchasedCategories = $order->orderItems->pluck('product.category')->unique()->toArray();
 
         $recommendedProducts = collect();
 
         if (!empty($purchasedProductIds)) {
-            // Random termékek lekérése, kizárva a megvett kategóriákat és termékeket
+            // Kizárt termékek és kategóriák alapján új ajánlott termékek lekérdezése
             $candidates = Product::whereNotIn('id', $purchasedProductIds)
                 ->whereNotIn('category', $purchasedCategories)
                 ->inRandomOrder()
                 ->limit(100)
                 ->get();
 
-            // Csoportosítjuk kategóriánként
+            // Kategóriánként egy véletlenszerű terméket ajánlunk
             $groupedByCategory = $candidates->groupBy('category');
 
             foreach ($groupedByCategory as $productsInCategory) {
@@ -133,7 +160,7 @@ class OrderController extends Controller
                 }
             }
 
-            // Ha nincs meg 4 ajánlás, pótoljuk random más termékekkel
+            // Ha nincs meg a 4 ajánlás, kiegészítjük véletlenszerű termékekkel
             if ($recommendedProducts->count() < 4) {
                 $missing = 4 - $recommendedProducts->count();
 
@@ -149,10 +176,10 @@ class OrderController extends Controller
                 $recommendedProducts = $recommendedProducts->merge($additionalProducts);
             }
 
+            // Max 4 ajánlott termék
             $recommendedProducts = $recommendedProducts->take(4);
         }
 
         return view('orders.thank_you', compact('order', 'recommendedProducts'));
     }
-
 }

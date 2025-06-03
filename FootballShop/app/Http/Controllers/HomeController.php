@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+// A főoldal (dashboard) megjelenítéséért felelős kontroller
 class HomeController extends Controller
 {
     /**
-     * Create a new controller instance.
+     * Konstruktor
+     *
+     * Meghatározza, hogy csak hitelesített (bejelentkezett) felhasználók érhetik el ezt a kontrollert.
      *
      * @return void
      */
@@ -17,9 +20,11 @@ class HomeController extends Controller
     }
 
     /**
-     * Show the application dashboard.
+     * A kezdőoldal vagy dashboard megjelenítése
      *
-     * @return \Illuminate\Contracts\Support\Renderable
+     * Ez a metódus betölti az 'index' nézetet, amit a felhasználó lát.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable A betöltendő nézet
      */
     public function index()
     {
