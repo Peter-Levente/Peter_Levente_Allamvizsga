@@ -39,7 +39,7 @@ class QuestionAnsweringService
 
         // Hasonló dokumentumok keresése a vektor-adatbázisból (pl. PostgreSQL + pgvector)
         $vectorStore = new PgsqlVectorStore();
-        $similarDocs = $vectorStore->similaritySearch($embedding);
+        $similarDocs = collect($vectorStore->similaritySearch($embedding))->take(3);
 
         // Ha nincs találat, visszatérünk egy alapértelmezett válasszal
         if (empty($similarDocs)) {
@@ -51,15 +51,17 @@ class QuestionAnsweringService
 
         // Vásárlóbarát, barátságos válasz stílusú prompt generálása
         $prompt = <<<PROMPT
-Kérlek, válaszolj a vásárlói kérdésre az alábbi termékleírás vagy szöveg alapján. A válaszod legyen segítőkész, érthető és barátságos, mintha egy webshop ügyfélszolgálata válaszolna. Ha a kérdésre nem található egyértelmű válasz, írd azt, hogy "Sajnálom, erről nem áll rendelkezésemre információ."
+Kérlek, válaszolj a vásárlói kérdésre az alábbi termékleírás vagy szöveg alapján. Csak erre az egy kérdésre figyelj, az előző kérdéseket vagy válaszokat ne vedd figyelembe. A válaszod legyen segítőkész, érthető és barátságos, mintha egy webshop ügyfélszolgálata válaszolna. Ha a kérdésre nem található egyértelmű válasz, írd azt, hogy "Sajnálom, erről nem áll rendelkezésemre információ."
 
 Kérdés: "{$question}"
 
 Termékleírás / szöveg:
 {$context}
 
-Fontos: A válasz a megadott szövegre épüljön, lehetőleg idézve belőle. Kiegészítheted rövid magyarázattal vagy új információval is, amennyiben az szorosan kapcsolódik a szöveg témájához, és nem mond ellent annak tartalmának. A hangnem maradjon vásárlóbarát és segítőkész.
+Fontos: A válasz a megadott szövegre épüljön, lehetőleg idézve belőle. Kiegészítheted rövid magyarázattal vagy új információval is, amennyiben az szorosan kapcsolódik a szöveg témájához, és nem mond ellent annak tartalmának. A hangnem maradjon vásárlóbarát és segítőkész. Csak az adott termékleírás és aktuális kérdés alapján válaszolj. Előző kérdések, válaszok vagy termékek ne befolyásolják a választ.
+
 PROMPT;
+
 
         // A válasz generálása OpenAI segítségével
         return $this->openai->chat($prompt);
